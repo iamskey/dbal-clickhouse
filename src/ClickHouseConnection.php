@@ -67,9 +67,8 @@ class ClickHouseConnection implements Connection, PingableConnection, ServerInfo
     public function query(string $sql) : ClickhouseResult
     {
         $stmt = $this->prepare($sql);
-        $stmt->execute();
 
-        return new ClickhouseResult($stmt);
+        return $stmt->execute();
     }
 
     /**

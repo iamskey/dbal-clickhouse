@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace FOD\DBALClickHouse;
 
 use ClickHouseDB\Client;
+use Doctrine\DBAL\Driver\Result;
 use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
@@ -72,7 +73,7 @@ class ClickHouseStatement implements \IteratorAggregate, Statement
     protected $iterator;
 
     /** @var int */
-    private $fetchMode = FetchMode::MIXED;
+    private $fetchMode = FetchMode::ASSOCIATIVE;
 
     public function __construct(Client $client, string $statement, AbstractPlatform $platform)
     {
@@ -130,10 +131,9 @@ class ClickHouseStatement implements \IteratorAggregate, Statement
         if (! in_array($mode, [
             FetchMode::ASSOCIATIVE,
             FetchMode::NUMERIC,
-            FetchMode::STANDARD_OBJECT,
             \PDO::FETCH_KEY_PAIR,
         ], true)) {
-            $mode = FetchMode::MIXED;
+            $mode = FetchMode::ASSOCIATIVE;
         }
 
         return $mode;
@@ -156,12 +156,8 @@ class ClickHouseStatement implements \IteratorAggregate, Statement
             return array_values($data);
         }
 
-        if ($this->assumeFetchMode($fetchMode) === FetchMode::MIXED) {
+        if ($this->assumeFetchMode($fetchMode) === FetchMode::ASSOCIATIVE) {
             return array_values($data) + $data;
-        }
-
-        if ($this->assumeFetchMode($fetchMode) === FetchMode::STANDARD_OBJECT) {
-            return (object) $data;
         }
 
         if ($this->assumeFetchMode($fetchMode) === \PDO::FETCH_KEY_PAIR) {
@@ -189,19 +185,10 @@ class ClickHouseStatement implements \IteratorAggregate, Statement
             );
         }
 
-        if ($this->assumeFetchMode($fetchMode) === FetchMode::MIXED) {
+        if ($this->assumeFetchMode($fetchMode) === FetchMode::ASSOCIATIVE) {
             return array_map(
                 function ($row) {
                     return array_values($row) + $row;
-                },
-                $this->rows
-            );
-        }
-
-        if ($this->assumeFetchMode($fetchMode) === FetchMode::STANDARD_OBJECT) {
-            return array_map(
-                function ($row) {
-                    return (object) $row;
                 },
                 $this->rows
             );
@@ -269,7 +256,7 @@ class ClickHouseStatement implements \IteratorAggregate, Statement
     /**
      * {@inheritDoc}
      */
-    public function execute($params = null) : bool
+    public function execute($params = null): Result
     {
         $hasZeroIndex = false;
         if (is_array($params)) {
@@ -302,7 +289,7 @@ class ClickHouseStatement implements \IteratorAggregate, Statement
 
         $this->processViaSMI2($sql);
 
-        return true;
+        return new ClickhouseResult($this);
     }
 
     /**
