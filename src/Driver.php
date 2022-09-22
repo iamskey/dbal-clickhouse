@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace FOD\DBALClickHouse;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Driver\API\ExceptionConverter;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 
 /**
  * ClickHouse Driver
@@ -64,9 +66,9 @@ class Driver implements \Doctrine\DBAL\Driver
     /**
      * {@inheritDoc}
      */
-    public function getSchemaManager(Connection $conn) : ClickHouseSchemaManager
+    public function getSchemaManager(Connection $conn, AbstractPlatform $platform) : ClickHouseSchemaManager
     {
-        return new ClickHouseSchemaManager($conn);
+        return new ClickHouseSchemaManager($conn, $platform);
     }
 
     /**
@@ -85,5 +87,10 @@ class Driver implements \Doctrine\DBAL\Driver
         $params = $conn->getParams();
 
         return $params['dbname'] ?? $conn->fetchOne('SELECT currentDatabase() as dbname');
+    }
+
+    public function getExceptionConverter(): ExceptionConverter
+    {
+        // TODO: Implement getExceptionConverter() method.
     }
 }

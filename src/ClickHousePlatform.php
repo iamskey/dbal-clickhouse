@@ -20,6 +20,7 @@ use Doctrine\DBAL\Platforms\TrimMode;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\TableDiff;
+use Doctrine\DBAL\Schema\UniqueConstraint;
 use Doctrine\DBAL\Types\BigIntType;
 use Doctrine\DBAL\Types\BlobType;
 use Doctrine\DBAL\Types\DateTimeType;
@@ -65,57 +66,57 @@ class ClickHousePlatform extends AbstractPlatform
     /**
      * {@inheritDoc}
      */
-    public function getBooleanTypeDeclarationSQL(array $columnDef) : string
+    public function getBooleanTypeDeclarationSQL(array $column) : string
     {
         return $this->prepareDeclarationSQL(
             UnsignedNumericalClickHouseType::UNSIGNED_CHAR .
             NumericalClickHouseType::TYPE_INT . BitNumericalClickHouseType::EIGHT_BIT,
-            $columnDef
+            $column
         );
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getIntegerTypeDeclarationSQL(array $columnDef) : string
+    public function getIntegerTypeDeclarationSQL(array $column) : string
     {
         return $this->prepareDeclarationSQL(
-            $this->_getCommonIntegerTypeDeclarationSQL($columnDef) .
+            $this->_getCommonIntegerTypeDeclarationSQL($column) .
             NumericalClickHouseType::TYPE_INT . BitNumericalClickHouseType::THIRTY_TWO_BIT,
-            $columnDef
+            $column
         );
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getBigIntTypeDeclarationSQL(array $columnDef) : string
+    public function getBigIntTypeDeclarationSQL(array $column) : string
     {
-        return $this->prepareDeclarationSQL(StringClickHouseType::TYPE_STRING, $columnDef);
+        return $this->prepareDeclarationSQL(StringClickHouseType::TYPE_STRING, $column);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getSmallIntTypeDeclarationSQL(array $columnDef) : string
+    public function getSmallIntTypeDeclarationSQL(array $column) : string
     {
         return $this->prepareDeclarationSQL(
-            $this->_getCommonIntegerTypeDeclarationSQL($columnDef) .
+            $this->_getCommonIntegerTypeDeclarationSQL($column) .
             NumericalClickHouseType::TYPE_INT . BitNumericalClickHouseType::SIXTEEN_BIT,
-            $columnDef
+            $column
         );
     }
 
     /**
      * {@inheritDoc}
      */
-    protected function _getCommonIntegerTypeDeclarationSQL(array $columnDef) : string
+    protected function _getCommonIntegerTypeDeclarationSQL(array $column) : string
     {
-        if (! empty($columnDef['autoincrement'])) {
+        if (! empty($column['autoincrement'])) {
             throw ClickHouseException::notSupported('Clickhouse do not support AUTO_INCREMENT fields');
         }
 
-        return empty($columnDef['unsigned']) ? '' : UnsignedNumericalClickHouseType::UNSIGNED_CHAR;
+        return empty($column['unsigned']) ? '' : UnsignedNumericalClickHouseType::UNSIGNED_CHAR;
     }
 
     /**
@@ -204,25 +205,25 @@ class ClickHousePlatform extends AbstractPlatform
     /**
      * {@inheritDoc}
      */
-    public function getVarcharTypeDeclarationSQL(array $field) : string
+    public function getVarcharTypeDeclarationSQL(array $column) : string
     {
-        if (! isset($field['length'])) {
-            $field['length'] = $this->getVarcharDefaultLength();
+        if (! isset($column['length'])) {
+            $column['length'] = $this->getVarcharDefaultLength();
         }
 
-        $fixed = $field['fixed'] ?? false;
+        $fixed = $column['fixed'] ?? false;
 
         $maxLength = $fixed
             ? $this->getCharMaxLength()
             : $this->getVarcharMaxLength();
 
-        if ($field['length'] > $maxLength) {
-            return $this->getClobTypeDeclarationSQL($field);
+        if ($column['length'] > $maxLength) {
+            return $this->getClobTypeDeclarationSQL($column);
         }
 
         return $this->prepareDeclarationSQL(
-            $this->getVarcharTypeDeclarationSQLSnippet($field['length'], $fixed),
-            $field
+            $this->getVarcharTypeDeclarationSQLSnippet($column['length'], $fixed),
+            $column
         );
     }
 
@@ -237,17 +238,17 @@ class ClickHousePlatform extends AbstractPlatform
     /**
      * {@inheritDoc}
      */
-    public function getClobTypeDeclarationSQL(array $field) : string
+    public function getClobTypeDeclarationSQL(array $column) : string
     {
-        return $this->prepareDeclarationSQL(StringClickHouseType::TYPE_STRING, $field);
+        return $this->prepareDeclarationSQL(StringClickHouseType::TYPE_STRING, $column);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getBlobTypeDeclarationSQL(array $field) : string
+    public function getBlobTypeDeclarationSQL(array $column) : string
     {
-        return $this->prepareDeclarationSQL(StringClickHouseType::TYPE_STRING, $field);
+        return $this->prepareDeclarationSQL(StringClickHouseType::TYPE_STRING, $column);
     }
 
     /**
@@ -951,7 +952,7 @@ class ClickHousePlatform extends AbstractPlatform
     /**
      * {@inheritDoc}
      */
-    public function getUniqueConstraintDeclarationSQL($name, Index $index) : string
+    public function getUniqueConstraintDeclarationSQL($name, UniqueConstraint $constraint) : string
     {
         throw ClickHouseException::notSupported(__METHOD__);
     }
@@ -1328,5 +1329,10 @@ class ClickHousePlatform extends AbstractPlatform
         $c = $this->getIdentifierQuoteCharacter();
 
         return $c . addslashes($str) . $c;
+    }
+
+    public function getCurrentDatabaseExpression(): string
+    {
+        return 'DATABASE()';
     }
 }
