@@ -48,7 +48,7 @@ class DriverTest extends TestCase
 
     public function testGetSchemaManager()
     {
-        $this->assertInstanceOf(ClickHouseSchemaManager::class, $this->connection->getDriver()->getSchemaManager($this->connection));
+        $this->assertInstanceOf(ClickHouseSchemaManager::class, $this->connection->getDriver()->getSchemaManager($this->connection, $this->connection->getDriver()->getDatabasePlatform()));
     }
 
     public function testGetName()

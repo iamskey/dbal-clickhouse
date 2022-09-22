@@ -18,6 +18,7 @@ use ClickHouseDB\Client as Smi2CHClient;
 use ClickHouseDB\Exception\TransportException;
 use Doctrine\DBAL\Driver\Connection;
 use Doctrine\DBAL\Driver\PingableConnection;
+use Doctrine\DBAL\Driver\Result;
 use Doctrine\DBAL\Driver\ServerInfoAwareConnection;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
@@ -55,7 +56,7 @@ class ClickHouseConnection implements Connection, PingableConnection, ServerInfo
     /**
      * {@inheritDoc}
      */
-    public function prepare($prepareString) : ClickHouseStatement
+    public function prepare(string $prepareString) : ClickHouseStatement
     {
         return new ClickHouseStatement($this->smi2CHClient, $prepareString, $this->platform);
     }
@@ -63,13 +64,12 @@ class ClickHouseConnection implements Connection, PingableConnection, ServerInfo
     /**
      * {@inheritDoc}
      */
-    public function query() : ClickHouseStatement
+    public function query(string $sql) : ClickhouseResult
     {
-        $args = func_get_args();
-        $stmt = $this->prepare($args[0]);
+        $stmt = $this->prepare($sql);
         $stmt->execute();
 
-        return $stmt;
+        return new ClickhouseResult($stmt);
     }
 
     /**
@@ -87,9 +87,9 @@ class ClickHouseConnection implements Connection, PingableConnection, ServerInfo
     /**
      * {@inheritDoc}
      */
-    public function exec($statement) : int
+    public function exec(string $sql) : int
     {
-        $stmt = $this->prepare($statement);
+        $stmt = $this->prepare($sql);
         $stmt->execute();
 
         return $stmt->rowCount();
