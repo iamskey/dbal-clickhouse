@@ -91,6 +91,6 @@ class Driver implements \Doctrine\DBAL\Driver
 
     public function getExceptionConverter(): ExceptionConverter
     {
-        // TODO: Implement getExceptionConverter() method.
+        return new ClickHouseExceptionConverter();
     }
 }
