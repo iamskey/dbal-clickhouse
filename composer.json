@@ -1,7 +1,7 @@
 {
-    "name": "friendsofdoctrine/dbal-clickhouse",
+    "name": "iamskey/dbal-clickhouse",
     "type": "library",
-    "description": "Doctrine DBAL driver for ClickHouse",
+    "description": "Copy of Doctrine DBAL driver for ClickHouse",
     "keywords": [
         "doctrine",
         "dbal",
